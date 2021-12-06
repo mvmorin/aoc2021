@@ -1,37 +1,43 @@
-function parse_input(file)
-	substrs = split(read(file,String), '\n', keepempty=false)
+struct Line
+	# represents a line as x + t*v where 0 <= t <= len
+	x1::Int
+	x2::Int
 
-	function extract(s)
-		m = match(r"([0-9]+),([0-9]+) -> ([0-9]+),([0-9]+)", s)
-		return tuple(parse.(Int,m.captures)...)
+	d1::Int
+	d2::Int
+	len::Int
+
+	function Line(x1,x2,y1,y2)
+		# dir1 == dir2  or one of them is zero
+		d1 = sign(y1-x1)
+		d2 = sign(y2-x2)
+		len = max(abs(y1-x1), abs(y2-x2))
+
+		new(x1,x2,d1,d2,len)
 	end
-
-	return extract.(substrs)
 end
 
-function add_line!(field,x1,x2,y1,y2)
-	d1 = sign(y1-x1)
-	d2 = sign(y2-x2)
-	len = max(abs(y1-x1), abs(y2-x2))
+function Line(s::AbstractString)
+	m = match(r"([0-9]+),([0-9]+) -> ([0-9]+),([0-9]+)", s)
+	return Line(parse.(Int,m.captures)...)
+end
 
-	for t = 0:len
-		p1 = x1 + t*d1
-		p2 = x2 + t*d2
+parse_input(file) = Line.(split(read(file,String), '\n', keepempty=false))
+
+function add_line!(field,line)
+	for t = 0:line.len
+		p1 = line.x1 + t*line.d1
+		p2 = line.x2 + t*line.d2
 		field[p1+1,p2+1] += 1
 	end
 end
 
-isdiagonal(line) = isdiagonal(line...)
-isdiagonal(x1,x2,y1,y2) = (x1 != y1) && (x2 != y2)
-
-max_coord_1(line) = max(line[1], line[3])
-max_coord_2(line) = max(line[2], line[4])
-max_coord(lines) = (maximum(max_coord_1.(lines)),maximum(max_coord_2.(lines)))
+isdiagonal(line) = abs(line.d1) == abs(line.d2) == 1
 
 function count_intersections(lines)
-	field = zeros(Int, max_coord(lines).+1 ...)
+	field = zeros(Int, 1000, 1000)
 	for l in lines
-		add_line!(field,l...)
+		add_line!(field,l)
 	end
 	return sum(p->p>=2, field)
 end
