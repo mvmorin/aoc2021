@@ -34,8 +34,8 @@ function decode_digit(digit, digit_map)
 end
 
 function decode_digit_map(event)
-	# An event needs to contain 1,4,7,8,9 for this algorithm to work. Luckily
-	# all events satisfy this
+	# An event needs to contain 1,4 for this algorithm to work. Luckily all
+	# events satisfy this
 
 	digit_map = Dict()
 	possible069 = filter(e -> length(e) == 6, event)
@@ -62,7 +62,7 @@ function decode_digit_map(event)
 	for entry in possible235
 		digit =
 			issubset(digit_map[1], entry) ? 3 :
-			issetequal(digit_map[9], union(digit_map[4], entry)) ? 5 : 2
+			issubset(setdiff(digit_map[4],digit_map[1]), entry) ? 5 : 2
 		digit_map[digit] = entry
 	end
 
