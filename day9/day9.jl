@@ -59,18 +59,54 @@ function find_basins(map)
 	return basins, length(mins)
 end
 
+function find_basins_2(map)
+	function find_basin(map,i,j,visited)
+		visited .= false
+		imax, jmax = size(map)
+
+		neighbours = [(i,j)]
+		visited[i,j] = true
+		basin = Vector{Tuple{Int,Int}}(undef,0)
+
+		while length(neighbours) > 0
+			i,j = pop!(neighbours)
+			push!(basin, (i,j))
+
+			i < imax && !visited[i+1,j] && map[i+1,j] < 9 && (push!(neighbours, (i+1,j)); visited[i+1,j] = true)
+			i > 1    && !visited[i-1,j] && map[i-1,j] < 9 && (push!(neighbours, (i-1,j)); visited[i-1,j] = true)
+			j < jmax && !visited[i,j+1] && map[i,j+1] < 9 && (push!(neighbours, (i,j+1)); visited[i,j+1] = true)
+			j > 1    && !visited[i,j-1] && map[i,j-1] < 9 && (push!(neighbours, (i,j-1)); visited[i,j-1] = true)
+		end
+
+		return basin
+	end
+
+	mins = keys(find_local_mins(map))
+	visited = similar(map, Bool)
+	basins = [find_basin(map,i,j,visited) for (i,j) in mins]
+
+	return basins, length(mins)
+end
 
 day9_1() = sum(values(find_local_mins(parse_input("input.txt"))))
 
 function day9_2()
 	map = parse_input("input.txt")
 	basins, n_basins = find_basins(map)
-
 	basin_size(basins, index) = sum(p->p==index, basins)
 
 	sizes = basin_size.(Ref(basins), 1:n_basins)
 	sort!(sizes)
+	return reduce(*,sizes[end-2:end])
+end
 
+function day9_2_alt()
+	map = parse_input("input.txt")
+	basins, n_basins = find_basins_2(map)
+	basin_size(basins, index) = length(basins[index])
+
+	sizes = basin_size.(Ref(basins), 1:n_basins)
+	sort!(sizes)
 	return reduce(*,sizes[end-2:end])
 end
 
